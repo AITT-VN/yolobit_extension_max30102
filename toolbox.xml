@@ -1,0 +1,5 @@
+<xml xmlns="https://developers.google.com/blockly/xml" id="toolbox" style="display: none">
+  <category name="MAX30102" colour="#370ACD" icon="heartbeat">
+    <block type="max30102_infor"/>
+  </category>
+</xml>

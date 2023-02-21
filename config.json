@@ -1,0 +1,14 @@
+{
+    "name": "MAX30102",
+    "description": "Mục mở rộng của Yolo:Bit dùng cho cảm biến nhịp tim MAX30102",
+    "libs": [
+        "max30102.py", "circular_buffer.py"
+    ],
+    "blocks": [
+        "definition.js"
+    ],
+    "toolbox": "toolbox.xml",
+    "languages": {
+    },
+    "poster": "poster.png"
+}
