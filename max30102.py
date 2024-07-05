@@ -17,9 +17,8 @@
 from machine import SoftI2C
 from ustruct import unpack
 from utime import sleep_ms, ticks_diff, ticks_ms, ticks_us
-import time
 
-from circular_buffer import CircularBuffer
+from circular_buffer import *
 
 # I2C address (7-bit address)
 MAX3010X_I2C_ADDRESS = 0x57  # Right-shift of 0xAE, 0xAF
@@ -155,14 +154,8 @@ MAX_30105_EXPECTED_PART_ID = 0x15
 
 # Size of the queued readings
 STORAGE_QUEUE_SIZE = 4
-#beats = 0
 
 
-MAX_HISTORY = 32
-history = []
-beats_history = []
-beat = False
-beats = 0
 # Data structure to hold the last readings
 class SensorData:
     def __init__(self):
@@ -189,6 +182,8 @@ class MAX30102(object):
         self._acq_frequency_inv = None
         # Circular buffer of readings from the sensor
         self.sense = SensorData()
+        self.shutdown()
+        self.wakeup()
 
     # Sensor setup method
     def setup_sensor(self, led_mode=2, adc_range=16384, sample_rate=400,
@@ -215,11 +210,6 @@ class MAX30102(object):
 
         # Set the Pulse Width to the default value of 411
         self.set_pulse_width(pulse_width)
-        self.MAX_HISTORY = 32
-        self.history = []
-        self.beats_history = []        
-        self.beat = False
-
 
         # Set the LED brightness to the default value of 'low'
         self.set_pulse_amplitude_red(led_power)
@@ -631,14 +621,14 @@ class MAX30102(object):
     # Pops the next red value in storage (if available)
     def pop_red_from_storage(self):
         if len(self.sense.red) == 0:
-            return 1
+            return 0
         else:
             return self.sense.red.pop()
 
     # Pops the next IR value in storage (if available)
     def pop_ir_from_storage(self):
         if len(self.sense.IR) == 0:
-            return 1
+            return 0
         else:
             return self.sense.IR.pop()
 
@@ -758,9 +748,10 @@ class MAX30102(object):
                     if beat and value< threshold_off:
                         beat = False
                     if beats >= 68 and beats <= 150 :
-                        print('BPM: ',beats)
-                    else:
-                        print('calculating...')
+                        return beats
+#                         print('BPM: ',beats)
+#                     else:
+#                         print('calculating...')
                     
                     
                 else:
@@ -770,18 +761,20 @@ class MAX30102(object):
                 
 
 
-    def calculate_spo2(self):
-        self.check()
+    def calculate_spo2(self, timeout = 6000):
+        last_time = ticks_ms()
+        while ticks_ms() - last_time < timeout:
+            self.check()
 
-    # Check if the storage contains available samples
-        if self.available():
-            # Access the storage FIFO and gather the readings (integers)
-            red_reading = self.pop_red_from_storage()
-            ir_reading = self.pop_ir_from_storage()
-            #spo2 = 100*(red_reading/ir_reading)/(red_reading/ir_reading+1.4*(1-red_reading/ir_reading))
-            
-            z =  ir_reading/red_reading
-            saturation = 115 - 25*z
-            print("{}%".format(round(saturation,1)))
-            sleep_ms(1000)
-            
+        # Check if the storage contains available samples
+            if self.available():
+                # Access the storage FIFO and gather the readings (integers)
+                red_reading = self.pop_red_from_storage()
+                ir_reading = self.pop_ir_from_storage()
+                #spo2 = 100*(red_reading/ir_reading)/(red_reading/ir_reading+1.4*(1-red_reading/ir_reading))
+                
+                z =  ir_reading/red_reading
+                saturation = 115 - 25*z
+                sleep_ms(1000)
+                return saturation
+
