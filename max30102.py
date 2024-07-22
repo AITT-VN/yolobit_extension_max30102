@@ -14,7 +14,7 @@
 # This driver aims at giving almost full access to Maxim MAX30102 functionalities.
 #                                                                          n-elia
 
-from machine import SoftI2C
+from machine import SoftI2C, Pin
 from ustruct import unpack
 from utime import sleep_ms, ticks_diff, ticks_ms, ticks_us
 
@@ -167,11 +167,20 @@ class SensorData:
 # Sensor class
 class MAX30102(object):
     def __init__(self,
-                 i2c: SoftI2C,
+                 i2c = None,
                  i2c_hex_address=MAX3010X_I2C_ADDRESS,
                  ):
+        i2c = SoftI2C(sda=Pin(21),scl=Pin(22),freq=400000,)
         self.i2c_address = i2c_hex_address
         self._i2c = i2c
+        # Scan I2C bus to ensure that the sensor is connected
+        if self.i2c_address not in i2c.scan():
+            print("Sensor not found.")
+        elif not (self.check_part_id()):
+            # Check that the targeted sensor is compatible
+            print("I2C device ID not corresponding to MAX30102 or MAX30105.")
+        else:
+            print("Sensor connected and recognized.")
         self._active_leds = None
         self._pulse_width = None
         self._multi_led_read_mode = None
@@ -182,8 +191,6 @@ class MAX30102(object):
         self._acq_frequency_inv = None
         # Circular buffer of readings from the sensor
         self.sense = SensorData()
-        self.shutdown()
-        self.wakeup()
 
     # Sensor setup method
     def setup_sensor(self, led_mode=2, adc_range=16384, sample_rate=400,
@@ -191,7 +198,7 @@ class MAX30102(object):
                      pulse_width=411):
         # Reset the sensor's registers from previous configurations
         self.soft_reset()
-
+        
         # Set the number of samples to be averaged by the chip to 8
         self.set_fifo_average(sample_avg)
 
@@ -277,7 +284,7 @@ class MAX30102(object):
 
         # Configuration reset
 
-    def soft_reset(self):
+    def soft_reset(self, curr_status = 0):
         # When the RESET bit is set to one, all configuration, threshold,
         # and data registers are reset to their power-on-state through
         # a power-on reset. The RESET bit is cleared automatically back to zero
@@ -748,7 +755,7 @@ class MAX30102(object):
                     if beat and value< threshold_off:
                         beat = False
                     if beats >= 68 and beats <= 150 :
-                        return beats
+                        return round(beats)
 #                         print('BPM: ',beats)
 #                     else:
 #                         print('calculating...')
@@ -774,7 +781,8 @@ class MAX30102(object):
                 #spo2 = 100*(red_reading/ir_reading)/(red_reading/ir_reading+1.4*(1-red_reading/ir_reading))
                 
                 z =  ir_reading/red_reading
-                saturation = 115 - 25*z
+                saturation = 116 - 25*z
                 sleep_ms(1000)
-                return saturation
+                return round(saturation)
+
 
