@@ -32,6 +32,7 @@ Blockly.Blocks['max30102_infor'] = {
 Blockly.Python['max30102_infor'] = function(block) {
   Blockly.Python.definitions_['import_machine'] = 'from machine import sleep, SoftI2C, Pin';
   Blockly.Python.definitions_['import_utime'] = 'from utime import ticks_diff, ticks_us,ticks_ms';
+  Blockly.Python.definitions_['import_max30102lib'] = 'from max30102 import *';
   Blockly.Python.definitions_['import_max30102'] = 'sensor = MAX30102()\n' + 'sensor.setup_sensor()\n';
     var dropdown_action = block.getFieldValue('action');
     // TODO: Assemble Python into code variable.
