@@ -13,7 +13,7 @@
 #
 # This driver aims at giving almost full access to Maxim MAX30102 functionalities.
 #                                                                          n-elia
-
+from yolobit import *
 from machine import SoftI2C, Pin
 from ustruct import unpack
 from utime import sleep_ms, ticks_diff, ticks_ms, ticks_us
@@ -170,7 +170,7 @@ class MAX30102(object):
                  i2c = None,
                  i2c_hex_address=MAX3010X_I2C_ADDRESS,
                  ):
-        i2c = SoftI2C(sda=Pin(21),scl=Pin(22),freq=400000,)
+        i2c = SoftI2C(sda=Pin(pin20.pin),scl=Pin(pin19.pin),freq=400000)
         self.i2c_address = i2c_hex_address
         self._i2c = i2c
         # Scan I2C bus to ensure that the sensor is connected
